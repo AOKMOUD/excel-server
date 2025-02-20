@@ -5,7 +5,9 @@ import pandas as pd
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, CallbackContext, MessageHandler, filters, \
     ContextTypes
+from flask import Flask
 
+app = Flask(__name__)
 
 # Загрузка данных из Excel с обработкой ошибок
 file_path = r"\\192.168.1.5\interview\1СУП\ООИРП\КБ\spisokKnig.xlsx"
@@ -369,7 +371,8 @@ if __name__ == "__main__":
         print(f"⚠️ Ошибка: {e}")
     except KeyboardInterrupt:
         print("Бот остановлен вручную.")
-
+port = int(os.environ.get("PORT", 5000))  # Railway передает порт
+app.run(host="0.0.0.0", port=port)
 
 
 
