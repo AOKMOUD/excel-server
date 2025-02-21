@@ -12,7 +12,7 @@ import requests
 file_path = r"\\192.168.1.5\interview\1СУП\ООИРП\КБ\spisokKnig.xlsx"
 
 # 🔹 Получаем данные с API
-API_URL = "http://localhost:5000/data"
+API_URL = "https://excel-server-new.onrender.com/data"
 response = requests.get(API_URL)
 
 if response.status_code == 200:
