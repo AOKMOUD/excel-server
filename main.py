@@ -5,20 +5,54 @@ import pandas as pd
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, CallbackContext, MessageHandler, filters, \
     ContextTypes
-from flask import Flask
+import requests
 
-app = Flask(__name__)
 
-# Загрузка данных из Excel с обработкой ошибок
+# 🔹 Указываем путь к Excel-файлу (сетевой диск)
 file_path = r"\\192.168.1.5\interview\1СУП\ООИРП\КБ\spisokKnig.xlsx"
+
+# 🔹 Получаем данные с API
+API_URL = "http://localhost:5000/data"
+response = requests.get(API_URL)
+
+if response.status_code == 200:
+    api_data = response.json()  # Данные с API
+    print(f"📡 Данные с API получены. Всего записей: {len(api_data)}")
+
+    # 🔹 Создаём DataFrame из данных API
+    df_api = pd.DataFrame(api_data)
+
+    # 🔹 Сохраняем данные API в Excel в том же формате, что и оригинальный файл
+    try:
+        if os.path.exists(file_path):
+            df_original = pd.read_excel(file_path)  # Оригинальный Excel-файл
+
+            # Проверяем, совпадают ли столбцы, и дополняем недостающие
+            missing_columns = [col for col in df_original.columns if col not in df_api.columns]
+            for col in missing_columns:
+                df_api[col] = ""  # Добавляем недостающие столбцы
+
+            # Сохраняем данные
+            df_api = df_api[df_original.columns]  # Упорядочиваем колонки
+            df_api.to_excel(file_path, index=False)
+            print(f"✅ Данные API успешно сохранены в {file_path}")
+        else:
+            print("❌ Ошибка: Файл Excel не найден.")
+    except Exception as e:
+        print(f"❌ Ошибка при сохранении данных в Excel: {e}")
+else:
+    print("❌ Ошибка при получении данных с API:", response.status_code)
+
+# 🔹 Проверяем, существует ли файл Excel
 try:
     if os.path.exists(file_path):
         book_data = pd.read_excel(file_path)
         if "Жанр" not in book_data.columns:
             book_data["Жанр"] = ""
-        print("✅ Файл успешно загружен.")
+
+        print("✅ Файл Excel успешно загружен.")
     else:
-        print("❌ Ошибка: Файл не найден.")
+        print("❌ Ошибка: Файл Excel не найден.")
         book_data = pd.DataFrame()
 except Exception as e:
     print(f"❌ Ошибка при загрузке Excel-файла: {e}")
@@ -371,8 +405,7 @@ if __name__ == "__main__":
         print(f"⚠️ Ошибка: {e}")
     except KeyboardInterrupt:
         print("Бот остановлен вручную.")
-port = int(os.environ.get("PORT", 5000))  # Railway передает порт
-app.run(host="0.0.0.0", port=port)
+
 
 
 
